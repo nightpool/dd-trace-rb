@@ -27,6 +27,10 @@ module Datadog
         # Config response
         module Response
           attr_reader :roots, :targets, :target_files, :client_configs
+
+          def empty?
+            @empty
+          end
         end
 
         class Transport
