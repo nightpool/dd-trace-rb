@@ -6,6 +6,7 @@ require_relative '../runtime/metrics'
 require_relative '../telemetry/client'
 require_relative '../workers/runtime_metrics'
 
+require_relative '../remote/component'
 require_relative '../../tracing/component'
 require_relative '../../profiling/component'
 require_relative '../../appsec/component'
@@ -60,6 +61,7 @@ module Datadog
         attr_reader \
           :health_metrics,
           :logger,
+          :remote,
           :profiler,
           :runtime_metrics,
           :telemetry,
@@ -71,6 +73,9 @@ module Datadog
           @logger = self.class.build_logger(settings)
 
           agent_settings = AgentSettingsResolver.call(settings, logger: @logger)
+
+          # Remote
+          @remote = Remote::Component.build(settings, agent_settings)
 
           # Tracer
           @tracer = self.class.build_tracer(settings, agent_settings)
@@ -111,6 +116,9 @@ module Datadog
         # If it has another instance to compare to, it will compare
         # and avoid tearing down parts still in use.
         def shutdown!(replacement = nil)
+          # Shutdown remote configuration
+          remote.shutdown! if remote
+
           # Decommission AppSec
           appsec.shutdown! if appsec
 
